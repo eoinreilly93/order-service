@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: Order-Service
+  datasource:
+    url: jdbc:h2:mem:orderdb
+    username: sa
+    password: password
+    driverClassName: org.h2.Driver
+  jpa:
+    # Disable hibernate auto schema creation
+    hibernate:
+      ddl-auto: none
+    database-platform: org.hibernate.dialect.H2Dialect
+  h2:
+    console.enabled: true
+  # Makes console log output colourful
+  output:
+    ansi:
+      enabled: ALWAYS
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+  kafka:
+    create-topics: true
+    bootstrap-servers: "localhost:9092"
+    producer:
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+  threads:
+    virtual:
+      enabled: true
+
+server:
+  port: 8083
+  servlet:
+    context-path: "/order-service"
+  shutdown: graceful
+
+gsshop-common:
+  auth:
+    enabled: true
+    jwt-token-secret: c63714bee7677d179d980aeceffb1a2ac63ebb25933cc16ad58d90f043b9da9f1c22b6d70e7ec8183884108eb6660be5d1cfba7da55b56cfa6e8ba201f97370a
+    jwt-token-salt: abcd1234
