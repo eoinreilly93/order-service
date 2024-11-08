@@ -13,16 +13,10 @@ import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 
 
-/**
- * @DataJpaTest automatically runs each test in its own transaction and roll it back, so there is no
- * need to manually delete data after each test
- */
-@DataJpaTest
-class OrderRepositoryTest {
+class OrderRepositoryTest extends BaseRepositoriesTest {
 
     @Autowired
     private TestEntityManager testEntityManager;

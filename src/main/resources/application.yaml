@@ -2,10 +2,10 @@ spring:
   application:
     name: Order-Service
   datasource:
-    url: jdbc:h2:mem:orderdb
-    username: sa
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: user
     password: password
-    driverClassName: org.h2.Driver
+    driverClassName: org.postgresql.Driver
   jpa:
     # Disable hibernate auto schema creation
     hibernate:
