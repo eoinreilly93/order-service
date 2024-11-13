@@ -15,8 +15,7 @@ public class TestContext {
     public Consumer<String, OrderKMO> consumer(
             final ConsumerFactory<String, OrderKMO> consumerFactory) {
         final Consumer<String, OrderKMO> consumer = consumerFactory.createConsumer();
-//        consumer.subscribe(List.of("orders"));
-        log.info("Configured test consumer bean to consume from 'orders' topic");
+        log.info("Configured test consumer bean");
         return consumer;
     }
 }
