@@ -1,5 +1,6 @@
 package com.shop.generic.orderservice.cucumber.stepdefinitions;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -82,8 +83,8 @@ public class ApiStepDefs extends CucumberSpringConfiguration {
                 .andReturn();
     }
 
-    @Then("a response is generated with a {int} status and a body similar to")
-    public void aResponseIsGeneratedWithAStatusAndABodySimilarToAndContainsHeaders(
+    @Then("a successful response is generated with a {int} status and a body similar to")
+    public void aResponseIsGeneratedWithAStatusAndABodySimilarTo(
             final int expectedStatus,
             final String expectedBody) throws Exception {
         response = mvcResult.getResponse();
@@ -93,6 +94,19 @@ public class ApiStepDefs extends CucumberSpringConfiguration {
                 JSONCompareMode.LENIENT,
                 new Customization("timestamp", (o1, o2) -> true),
                 new Customization("result.orderId", (o1, o2) -> true)
+        ));
+    }
+
+    @Then("an error response is generated with a {int} status and a body similar to")
+    public void anErrorResponseIsGeneratedWithAStatusAndABodySimilarTo(
+            final int expectedStatus,
+            final String expectedBody) throws Exception {
+        response = mvcResult.getResponse();
+        log.info(response.getContentAsString());
+        assertEquals(expectedStatus, response.getStatus());
+        JSONAssert.assertEquals(expectedBody, response.getContentAsString(), new CustomComparator(
+                JSONCompareMode.LENIENT,
+                new Customization("timestamp", (o1, o2) -> true)
         ));
     }
 
@@ -110,5 +124,15 @@ public class ApiStepDefs extends CucumberSpringConfiguration {
                 jsonObject.getJSONObject("result").getString("orderId"));
         final Optional<Order> order = this.orderRepository.findByOrderId(orderId);
         assertTrue(order.isPresent());
+    }
+
+    @And("an order is not saved to the database")
+    public void anOrderIsNotSavedToTheDatabase() {
+        assertEquals(0, this.orderRepository.count());
+    }
+
+    @And("postgres is up and running")
+    public void postgresIsUpAndRunning() {
+        assertThat(postgreSQLContainer.isRunning()).isTrue();
     }
 }

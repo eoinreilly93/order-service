@@ -6,7 +6,7 @@ import com.shop.generic.common.dtos.PurchaseProductDTO;
 import com.shop.generic.common.entities.Order;
 import com.shop.generic.common.enums.OrderStatus;
 import com.shop.generic.orderservice.dtos.OrderDetailsDTO;
-import com.shop.generic.orderservice.exceptions.OrderNotFoundException;
+import com.shop.generic.orderservice.exceptions.OrderNotValidException;
 import com.shop.generic.orderservice.repositories.OrderRepository;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -53,7 +53,7 @@ public class OrderService {
 
     private Order createOrder(final UUID orderId, final OrderCreationDTO orderCreationDTO) {
         if (orderCreationDTO.purchaseProductDTOS().isEmpty()) {
-            throw new OrderNotFoundException("An order cannot be created with no products");
+            throw new OrderNotValidException("An order cannot be created with no products");
         }
         final BigDecimal orderCost = orderCreationDTO.purchaseProductDTOS().stream()
                 .map(product -> product.price().multiply(BigDecimal.valueOf(product.quantity())))
@@ -78,7 +78,7 @@ public class OrderService {
 
     public OrderDetailsDTO fetchOrderDetails(final UUID orderId) {
         final Optional<Order> order = this.orderRepository.findByOrderId(orderId);
-        return new OrderDetailsDTO(order.orElseThrow(() -> new OrderNotFoundException(
+        return new OrderDetailsDTO(order.orElseThrow(() -> new OrderNotValidException(
                 String.format("Order with id %s not found", orderId))));
     }
 

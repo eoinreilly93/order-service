@@ -1,0 +1,8 @@
+spring:
+  kafka:
+    consumer:
+      group-id: orders-group
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        "[spring.json.trusted.packages]": "com.shop.generic.common.kmos"
+      auto-offset-reset: earliest

@@ -16,7 +16,7 @@ import com.shop.generic.common.dtos.PurchaseProductDTO;
 import com.shop.generic.common.entities.Order;
 import com.shop.generic.common.enums.OrderStatus;
 import com.shop.generic.orderservice.dtos.OrderDetailsDTO;
-import com.shop.generic.orderservice.exceptions.OrderNotFoundException;
+import com.shop.generic.orderservice.exceptions.OrderNotValidException;
 import com.shop.generic.orderservice.repositories.OrderRepository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -164,7 +164,7 @@ class OrderServiceTest {
         when(orderRepository.findByOrderId(invalidOrderId)).thenReturn(Optional.empty());
 
         // When/Then
-        final OrderNotFoundException exception = assertThrows(OrderNotFoundException.class,
+        final OrderNotValidException exception = assertThrows(OrderNotValidException.class,
                 () -> orderService.fetchOrderDetails(invalidOrderId));
         assertEquals(String.format("Order with id %s not found", invalidOrderId),
                 exception.getMessage());

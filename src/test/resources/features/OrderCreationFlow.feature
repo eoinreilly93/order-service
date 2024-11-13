@@ -2,6 +2,8 @@ Feature: Example feature file
 
   Background:
     Given initial setup is complete
+    And kafka is up and running
+    And postgres is up and running
     And the service is up and running
     And now is "2024-11-06T08:13:12.345"
 
@@ -27,7 +29,7 @@ Feature: Example feature file
       }
     """
 
-    Then a response is generated with a 201 status and a body similar to
+    Then a successful response is generated with a 201 status and a body similar to
     """
       {
         "message": null,
@@ -45,3 +47,26 @@ Feature: Example feature file
 
     And an order is saved to the database
     And the order is sent to the kafka topic "orders"
+
+  @Negative
+  Scenario: Fails to create an order because of missing product ids
+    When a POST request is sent to "/orders" with data
+    """
+      {
+        "purchaseProductDTOS": [],
+        "city": "London"
+      }
+    """
+
+    Then an error response is generated with a 400 status and a body similar to
+    """
+      {
+        "message" : null,
+        "error" : "An order cannot be created with no products",
+        "result" : null,
+        "timestamp" : "2024-11-08T22:42:40.522034"
+      }
+    """
+
+    And an order is not saved to the database
+    And the order is not sent to the kafka topic "orders"
