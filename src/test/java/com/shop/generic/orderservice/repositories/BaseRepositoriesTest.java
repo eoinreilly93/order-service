@@ -2,7 +2,6 @@ package com.shop.generic.orderservice.repositories;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
@@ -17,7 +16,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
  * @DataJpaTest automatically runs each test in its own transaction and roll it back, so there is no
  * need to manually delete data after each test
  */
-@DataJpaTest(excludeAutoConfiguration = FlywayAutoConfiguration.class)
+@DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Testcontainers
 public abstract class BaseRepositoriesTest {
@@ -25,8 +24,7 @@ public abstract class BaseRepositoriesTest {
     @Container
     @ServiceConnection
     static PostgreSQLContainer<?> postgreSQLContainer = new PostgreSQLContainer<>(
-            "postgres:14.8")
-            .withInitScript("schema.sql");
+            "postgres:14.8");
 
     @BeforeAll
     public static void beforeAll() {

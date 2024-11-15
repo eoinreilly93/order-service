@@ -25,8 +25,7 @@ public class CucumberSpringConfiguration {
 
     @Container
     protected static PostgreSQLContainer<?> postgreSQLContainer = new PostgreSQLContainer<>(
-            "postgres:14.8")
-            .withInitScript("schema.sql");
+            "postgres:14.8");
 
     @Container
     protected static final KafkaContainer kafkaContainer = new KafkaContainer(
