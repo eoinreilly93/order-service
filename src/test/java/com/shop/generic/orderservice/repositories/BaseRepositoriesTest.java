@@ -1,7 +1,5 @@
 package com.shop.generic.orderservice.repositories;
 
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
@@ -25,14 +23,4 @@ public abstract class BaseRepositoriesTest {
     @ServiceConnection
     static PostgreSQLContainer<?> postgreSQLContainer = new PostgreSQLContainer<>(
             "postgres:14.8");
-
-    @BeforeAll
-    public static void beforeAll() {
-        postgreSQLContainer.start();
-    }
-
-    @AfterAll
-    public static void afterAll() {
-        postgreSQLContainer.stop();
-    }
 }

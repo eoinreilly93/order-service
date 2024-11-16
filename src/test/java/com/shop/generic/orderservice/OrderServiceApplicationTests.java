@@ -9,7 +9,7 @@ import org.springframework.boot.test.context.SpringBootTest;
  * TODO: Eventually move topic create to be external to the app
  */
 @SpringBootTest(properties = {"spring.kafka.create-topics=false"})
-class OrderServiceApplicationTests {
+class OrderServiceApplicationTests extends AbstractBaseIntegrationTest {
 
     @Test
     void contextLoads() {
