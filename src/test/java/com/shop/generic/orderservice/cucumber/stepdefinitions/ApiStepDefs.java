@@ -4,9 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.shop.generic.common.auth.MicroserviceAuthorisationService;
 import com.shop.generic.common.entities.Order;
 import com.shop.generic.orderservice.cucumber.configurations.CucumberSpringConfiguration;
 import com.shop.generic.orderservice.repositories.OrderRepository;
@@ -22,11 +25,14 @@ import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.skyscreamer.jsonassert.ArrayValueMatcher;
 import org.skyscreamer.jsonassert.Customization;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.skyscreamer.jsonassert.JSONCompareMode;
 import org.skyscreamer.jsonassert.comparator.CustomComparator;
+import org.skyscreamer.jsonassert.comparator.DefaultComparator;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.web.servlet.MockMvc;
@@ -49,6 +55,9 @@ public class ApiStepDefs extends CucumberSpringConfiguration {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @MockBean
+    private MicroserviceAuthorisationService microserviceAuthorisationService;
 
     private MvcResult mvcResult;
     private MockHttpServletResponse response;
@@ -134,5 +143,57 @@ public class ApiStepDefs extends CucumberSpringConfiguration {
     @And("postgres is up and running")
     public void postgresIsUpAndRunning() {
         assertThat(postgreSQLContainer.isRunning()).isTrue();
+    }
+
+    @Given("an order exists in the database with the following data")
+    public void anOrderExistsInTheDatabaseWithTheFollowingData(final String json)
+            throws JsonProcessingException {
+        final Order order = createOrderFromJsonString(json);
+        this.orderRepository.save(order);
+    }
+
+    @When("a PUT request is sent to {string}")
+    public void aPUTRequestIsSentTo(final String url) throws Exception {
+        //TODO: Configure authentication properly for these tests
+        when(this.microserviceAuthorisationService.canServiceUpdateOrderStatus()).thenReturn(true);
+        mvcResult = this.mockMvc.perform(
+                        MockMvcRequestBuilders.put(url).contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andReturn();
+    }
+
+    @And("the order in the database should be")
+    public void theOrderInTheDatabaseShouldBe(final String expectedJson)
+            throws JsonProcessingException {
+        assertOrderJsonEqualToOrderInDatabase(new JSONObject(expectedJson));
+    }
+
+    private Order createOrderFromJsonString(final String json) throws JsonProcessingException {
+        return objectMapper.readValue(json, Order.class);
+    }
+
+    private void assertOrderJsonEqualToOrderInDatabase(final JSONObject expectedOrderJson)
+            throws JsonProcessingException {
+        final int id = (int) retrieveJsonItem(expectedOrderJson, "id");
+        final Order orderActual = this.orderRepository.findById(id)
+                .orElseThrow(() -> new AssertionError(
+                        "Expected order with id \"" + id + "\" but none was found"));
+
+        // annoyingly, if expectedOrderJson has auditItems = [] but orderActual has non-zero length auditItems, JSONAssert.assertEquals will throw a divide-by-zero error instead of showing the diff
+        assertEquals(expectedOrderJson.getJSONArray("auditItems").length(),
+                orderActual.getAuditItems().size());
+
+        JSONAssert.assertEquals(expectedOrderJson.toString(),
+                objectMapper.writeValueAsString(orderActual), new CustomComparator(
+                        JSONCompareMode.LENIENT,
+                        new Customization("timestamp", (o1, o2) -> true),
+                        new Customization("lastUpdated", (o1, o2) -> true),
+                        new Customization("auditItems", new ArrayValueMatcher<>(
+                                new DefaultComparator(JSONCompareMode.LENIENT)))
+                ));
+    }
+
+    private Object retrieveJsonItem(final JSONObject jsonObject, final String key) {
+        return jsonObject.isNull(key) ? null : jsonObject.get(key);
     }
 }

@@ -48,6 +48,58 @@ Feature: Example feature file
     And an order is saved to the database
     And the order is sent to the kafka topic "orders"
 
+  @Positive
+  Scenario: Successfully update an order
+    Given an order exists in the database with the following data
+    """
+      {
+        "id": 1,
+        "orderId":"fdbb15ad-db2b-4b7a-b900-b05affa904b9",
+        "price": 25.50,
+        "productIds": "1,2,3",
+        "status": "CREATED",
+        "city": "London",
+        "creationDate": "2024-11-18T20:02:42.413939",
+        "lastUpdated": "2024-11-18T20:02:42.413939",
+        "auditItems": []
+      }
+    """
+
+    When a PUT request is sent to "/orders/order/fdbb15ad-db2b-4b7a-b900-b05affa904b9/PENDING_DELIVERY"
+
+    Then a successful response is generated with a 200 status and a body similar to
+    """
+      {
+        "message": null,
+        "error": null,
+        "result": {
+          "orderId": "a3e16dc7-0c39-4e30-9d53-529bacf2f3e1",
+          "status": "PENDING_DELIVERY"
+        },
+        "timestamp":"2024-11-06T18:14:59.346148"
+       }
+    """
+
+    And the order in the database should be
+    """
+      {
+        "id": 1,
+        "orderId":"fdbb15ad-db2b-4b7a-b900-b05affa904b9",
+        "price": 25.50,
+        "productIds": "1,2,3",
+        "status": "PENDING_DELIVERY",
+        "city": "London",
+        "creationDate": "2024-11-18T20:02:42.413939",
+        "lastUpdated": "2024-11-18T20:02:42.413939",
+        "auditItems": [
+          {
+            "status": "CREATED",
+            "lastUpdated": "2024-11-18T20:02:42.413939"
+          }
+        ]
+      }
+    """
+
   @Negative
   Scenario: Fails to create an order because of missing product ids
     When a POST request is sent to "/orders" with data

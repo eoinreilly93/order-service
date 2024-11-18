@@ -22,6 +22,6 @@ CREATE TABLE orders_audit
     order_id     BIGINT       NOT NULL,
     last_updated TIMESTAMP    NOT NULL,
     CONSTRAINT pk_orders_audit PRIMARY KEY (id),
-    FOREIGN KEY (order_id) REFERENCES orders (id)
+    FOREIGN KEY (order_id) REFERENCES orders (id) ON DELETE CASCADE
 );
 
