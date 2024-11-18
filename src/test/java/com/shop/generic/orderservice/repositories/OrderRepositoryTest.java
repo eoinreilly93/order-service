@@ -5,6 +5,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.shop.generic.common.entities.Order;
+import com.shop.generic.common.entities.OrderAudit;
 import com.shop.generic.common.enums.OrderStatus;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -34,6 +35,7 @@ class OrderRepositoryTest extends BaseRepositoriesTest {
         order.setProductIds("1,2,3");
         order.setStatus(OrderStatus.CREATED);
         order.setCreationDate(LocalDateTime.now());
+        order.setLastUpdated(LocalDateTime.now());
         order.setCity("London");
 
         //When
@@ -55,6 +57,7 @@ class OrderRepositoryTest extends BaseRepositoriesTest {
         order.setProductIds("1,2,3");
         order.setStatus(OrderStatus.CREATED);
         order.setCreationDate(LocalDateTime.now());
+        order.setLastUpdated(LocalDateTime.now());
         order.setCity("London");
         this.testEntityManager.persist(order);
 
@@ -76,7 +79,7 @@ class OrderRepositoryTest extends BaseRepositoriesTest {
 
         assertThatThrownBy(() -> {
             final Order order = new Order(orderId, null, productIds, status, "London",
-                    LocalDateTime.now());
+                    LocalDateTime.now(), LocalDateTime.now());
         }).isInstanceOf(NullPointerException.class);
     }
 
@@ -91,7 +94,7 @@ class OrderRepositoryTest extends BaseRepositoriesTest {
         // When & Then
         assertThatThrownBy(() -> {
             final Order order = new Order(orderId, price, null, status, "London",
-                    LocalDateTime.now());
+                    LocalDateTime.now(), LocalDateTime.now());
         }).isInstanceOf(NullPointerException.class);
     }
 
@@ -105,7 +108,36 @@ class OrderRepositoryTest extends BaseRepositoriesTest {
 
         // When & Then
         assertThatThrownBy(() -> {
-            new Order(orderId, price, productIds, null, "London", LocalDateTime.now());
+            new Order(orderId, price, productIds, null, "London", LocalDateTime.now(),
+                    LocalDateTime.now());
         }).isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    @DisplayName("An order update should also create an order audit entry")
+    void should_saveAuditOrder() {
+        //Given
+        final UUID orderId = UUID.randomUUID();
+        final Order order = new Order();
+        order.setOrderId(orderId);
+        order.setPrice(BigDecimal.valueOf(2030.55));
+        order.setProductIds("1,2,3");
+        order.setStatus(OrderStatus.CREATED);
+        order.setCreationDate(LocalDateTime.now());
+        order.setLastUpdated(LocalDateTime.now());
+        order.setCity("London");
+        final OrderAudit orderAudit = new OrderAudit(OrderStatus.PENDING_DELIVERY,
+                LocalDateTime.now());
+        order.getAuditItems().add(orderAudit);
+        orderAudit.setOrder(order);
+        this.testEntityManager.persist(order);
+
+        //When
+        final Optional<Order> persistedOrder = this.orderRepository.findByOrderId(orderId);
+
+        //Then
+        assertThat(persistedOrder.get()).isEqualTo(order);
+        assertEquals(persistedOrder.get().getAuditItems().size(), 1);
+        assertThat(persistedOrder.get().getAuditItems().get(0)).isEqualTo(orderAudit);
     }
 }

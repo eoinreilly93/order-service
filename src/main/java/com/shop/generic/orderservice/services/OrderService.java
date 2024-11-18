@@ -4,6 +4,7 @@ import com.shop.generic.common.dtos.OrderCreationDTO;
 import com.shop.generic.common.dtos.OrderStatusDTO;
 import com.shop.generic.common.dtos.PurchaseProductDTO;
 import com.shop.generic.common.entities.Order;
+import com.shop.generic.common.entities.OrderAudit;
 import com.shop.generic.common.enums.OrderStatus;
 import com.shop.generic.orderservice.dtos.OrderDetailsDTO;
 import com.shop.generic.orderservice.exceptions.OrderNotValidException;
@@ -40,15 +41,16 @@ public class OrderService {
     }
 
     public OrderStatusDTO updateOrder(final UUID orderId, final OrderStatus newStatus) {
-        final Optional<Order> order = this.orderRepository.findByOrderId(orderId);
+        final Optional<Order> orderOpt = this.orderRepository.findByOrderId(orderId);
 
-        if (order.isEmpty()) {
+        if (orderOpt.isEmpty()) {
             throw new RuntimeException(String.format("Order with id %s not found", orderId));
         }
-        order.get().setStatus(newStatus);
-        this.orderRepository.save(order.get());
+        final Order orderToUpdate = orderOpt.get();
+        updateOrderAuditTrail(orderToUpdate, newStatus);
+        this.orderRepository.save(orderToUpdate);
         log.info("Order {} status updated to {}", orderId, newStatus);
-        return new OrderStatusDTO(order.get().getOrderId(), order.get().getStatus());
+        return new OrderStatusDTO(orderToUpdate.getOrderId(), orderToUpdate.getStatus());
     }
 
     private Order createOrder(final UUID orderId, final OrderCreationDTO orderCreationDTO) {
@@ -73,6 +75,7 @@ public class OrderService {
         order.setOrderId(orderId);
         order.setCity(orderCreationDTO.city());
         order.setCreationDate(LocalDateTime.now());
+        order.setLastUpdated(LocalDateTime.now());
         return order;
     }
 
@@ -91,5 +94,14 @@ public class OrderService {
     private void createAndSendShippingRequest(final Order order) {
         log.info("Creating shipping request");
         shippingService.createOrderShippingRequest(order);
+    }
+
+    private void updateOrderAuditTrail(final Order order, final OrderStatus newStatus) {
+        log.info("Updating order audit trail");
+        final OrderAudit orderAudit = new OrderAudit(order.getStatus(), order.getLastUpdated());
+        order.getAuditItems().add(orderAudit);
+        order.setStatus(newStatus);
+        order.setLastUpdated(LocalDateTime.now());
+        orderAudit.setOrder(order);
     }
 }

@@ -178,7 +178,9 @@ class OrderServiceTest {
         final Order order = new Order();
         order.setOrderId(orderId);
         order.setStatus(OrderStatus.CREATED);
-
+        order.setCreationDate(LocalDateTime.now());
+        order.setLastUpdated(LocalDateTime.now());
+        
         when(orderRepository.findByOrderId(orderId)).thenReturn(Optional.of(order));
 
         // When
