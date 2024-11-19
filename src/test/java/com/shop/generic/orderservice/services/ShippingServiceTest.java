@@ -77,7 +77,7 @@ class ShippingServiceTest {
     void testCreateOrderShippingRequest_singleOrder() {
         // Create an Order
         final Order order = new Order(UUID.randomUUID(), new BigDecimal("100.00"), "1,2,3",
-                OrderStatus.CREATED, "London", LocalDateTime.now());
+                OrderStatus.CREATED, "London", LocalDateTime.now(), LocalDateTime.now());
 
         // When and order is sent to the topic
         shippingService.createOrderShippingRequest(order);
@@ -97,7 +97,7 @@ class ShippingServiceTest {
         // Generate and send 50 orders
         for (int i = 0; i < 50; i++) {
             final Order order = new Order(UUID.randomUUID(), new BigDecimal("100.00"), "123,456",
-                    OrderStatus.CREATED, "London", LocalDateTime.now());
+                    OrderStatus.CREATED, "London", LocalDateTime.now(), LocalDateTime.now());
             orders.add(order);
 
             // Given
