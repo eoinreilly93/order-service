@@ -10,6 +10,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.shop.generic.common.clock.GsClock;
 import com.shop.generic.common.dtos.OrderCreationDTO;
 import com.shop.generic.common.dtos.OrderStatusDTO;
 import com.shop.generic.common.dtos.PurchaseProductDTO;
@@ -19,7 +20,10 @@ import com.shop.generic.orderservice.dtos.OrderDetailsDTO;
 import com.shop.generic.orderservice.exceptions.OrderNotValidException;
 import com.shop.generic.orderservice.repositories.OrderRepository;
 import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -41,6 +45,9 @@ class OrderServiceTest {
     @Mock
     private ShippingService shippingService;
 
+    @Mock
+    private GsClock clock;
+
     //Should really use constructor injection but showing this as an alternative example for injecting the mocks
     @InjectMocks
     private OrderService orderService;
@@ -53,6 +60,7 @@ class OrderServiceTest {
         final PurchaseProductDTO product2 = new PurchaseProductDTO(2, 2, new BigDecimal("14.99"));
         final OrderCreationDTO orderCreationDTO = new OrderCreationDTO(List.of(product1, product2),
                 "London");
+        when(this.clock.getClock()).thenReturn(Clock.fixed(Instant.now(), ZoneId.systemDefault()));
 
         // When
         final OrderStatusDTO orderStatusDTO = orderService.createShippingOrder(
@@ -108,23 +116,24 @@ class OrderServiceTest {
     @Test
     @DisplayName("Verify a shipping request is not sent if the order fails to persist to the database")
     void testCreateShippingOrder_FailureInRepository() {
-        // Arrange
+        // Given
         final PurchaseProductDTO product1 = new PurchaseProductDTO(1, 2, new BigDecimal("10.00"));
         final OrderCreationDTO orderCreationDTO = new OrderCreationDTO(List.of(product1), "London");
+        when(this.clock.getClock()).thenReturn(Clock.fixed(Instant.now(), ZoneId.systemDefault()));
 
         doThrow(new RuntimeException("Database error")).when(orderRepository)
                 .save(any(Order.class));
 
-        final OrderService orderService = new OrderService(orderRepository, shippingService);
+        final OrderService orderService = new OrderService(orderRepository, shippingService, clock);
 
-        // Act & Assert
+        // When
         final RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             orderService.createShippingOrder(orderCreationDTO);
         });
 
         assertEquals("Database error", exception.getMessage());
 
-        // Verify that shipping request was not made due to the exception
+        // Then verify that shipping request was not made due to the exception
         verify(shippingService, never()).createOrderShippingRequest(any(Order.class));
     }
 
@@ -173,15 +182,16 @@ class OrderServiceTest {
     @Test
     @DisplayName("Given a valid order ID and status, when updating order, then should update status and return OrderStatusDTO")
     void testUpdateOrder_ValidOrderId() {
-        // Give
+        // Given
         final UUID orderId = UUID.randomUUID();
         final Order order = new Order();
         order.setOrderId(orderId);
         order.setStatus(OrderStatus.CREATED);
         order.setCreationDate(LocalDateTime.now());
         order.setLastUpdated(LocalDateTime.now());
-        
+
         when(orderRepository.findByOrderId(orderId)).thenReturn(Optional.of(order));
+        when(this.clock.getClock()).thenReturn(Clock.fixed(Instant.now(), ZoneId.systemDefault()));
 
         // When
         final OrderStatusDTO result = orderService.updateOrder(orderId, OrderStatus.SHIPPED);

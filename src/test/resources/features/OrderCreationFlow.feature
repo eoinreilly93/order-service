@@ -5,9 +5,9 @@ Feature: Order service flow
     And kafka is up and running
     And postgres is up and running
     And the service is up and running
-    And now is "2024-11-06T08:13:12.345"
+    And now is "2024-11-06T18:14:59.346148Z"
 
-  @Positive
+  @Positive @A
   Scenario: Successfully create an order
 
     When a POST request is sent to "/orders" with data
@@ -48,7 +48,7 @@ Feature: Order service flow
     And an order is saved to the database
     And the order is sent to the kafka topic "orders"
 
-  @Positive
+  @Positive @B
   Scenario: Successfully update an order
     Given an order exists in the database with the following data
     """
@@ -59,8 +59,8 @@ Feature: Order service flow
         "productIds": "1,2,3",
         "status": "CREATED",
         "city": "London",
-        "creationDate": "2024-11-18T20:02:42.413939",
-        "lastUpdated": "2024-11-18T20:02:42.413939",
+        "creationDate": "2024-11-06T18:14:59.346148",
+        "lastUpdated": "2024-11-06T18:14:59.346148",
         "auditItems": []
       }
     """
@@ -89,12 +89,12 @@ Feature: Order service flow
         "productIds": "1,2,3",
         "status": "PENDING_DELIVERY",
         "city": "London",
-        "creationDate": "2024-11-18T20:02:42.413939",
-        "lastUpdated": "2024-11-18T20:02:42.413939",
+        "creationDate": "2024-11-06T18:14:59.346148",
+        "lastUpdated": "2024-11-06T18:14:59.346148",
         "auditItems": [
           {
             "status": "CREATED",
-            "lastUpdated": "2024-11-18T20:02:42.413939"
+            "lastUpdated": "2024-11-06T18:14:59.346148"
           }
         ]
       }
@@ -116,7 +116,7 @@ Feature: Order service flow
         "message" : null,
         "error" : "An order cannot be created with no products",
         "result" : null,
-        "timestamp" : "2024-11-08T22:42:40.522034"
+        "timestamp" : "2024-11-06T18:14:59.346148"
       }
     """
 

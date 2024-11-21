@@ -1,5 +1,6 @@
 package com.shop.generic.orderservice.services;
 
+import com.shop.generic.common.clock.GsClock;
 import com.shop.generic.common.dtos.OrderCreationDTO;
 import com.shop.generic.common.dtos.OrderStatusDTO;
 import com.shop.generic.common.dtos.PurchaseProductDTO;
@@ -25,11 +26,13 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final ShippingService shippingService;
+    private final GsClock clock;
 
     public OrderService(final OrderRepository orderRepository,
-            final ShippingService shippingService) {
+            final ShippingService shippingService, final GsClock clock) {
         this.orderRepository = orderRepository;
         this.shippingService = shippingService;
+        this.clock = clock;
     }
 
     public OrderStatusDTO createShippingOrder(final OrderCreationDTO orderCreationDTO) {
@@ -74,8 +77,8 @@ public class OrderService {
         order.setProductIds(productIdsAsString);
         order.setOrderId(orderId);
         order.setCity(orderCreationDTO.city());
-        order.setCreationDate(LocalDateTime.now());
-        order.setLastUpdated(LocalDateTime.now());
+        order.setCreationDate(LocalDateTime.now(this.clock.getClock()));
+        order.setLastUpdated(LocalDateTime.now(this.clock.getClock()));
         return order;
     }
 
@@ -101,7 +104,7 @@ public class OrderService {
         final OrderAudit orderAudit = new OrderAudit(order.getStatus(), order.getLastUpdated());
         order.getAuditItems().add(orderAudit);
         order.setStatus(newStatus);
-        order.setLastUpdated(LocalDateTime.now());
+        order.setLastUpdated(LocalDateTime.now(this.clock.getClock()));
         orderAudit.setOrder(order);
     }
 }

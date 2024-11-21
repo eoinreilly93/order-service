@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.shop.generic.common.auth.MicroserviceAuthorisationService;
+import com.shop.generic.common.clock.GsClock;
 import com.shop.generic.common.entities.Order;
 import com.shop.generic.orderservice.cucumber.configurations.CucumberSpringConfiguration;
 import com.shop.generic.orderservice.repositories.OrderRepository;
@@ -19,6 +20,9 @@ import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import java.io.UnsupportedEncodingException;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -59,6 +63,9 @@ public class ApiStepDefs extends CucumberSpringConfiguration {
     @MockBean
     private MicroserviceAuthorisationService microserviceAuthorisationService;
 
+    @MockBean
+    private GsClock clock;
+
     private MvcResult mvcResult;
     private MockHttpServletResponse response;
 
@@ -78,8 +85,9 @@ public class ApiStepDefs extends CucumberSpringConfiguration {
     }
 
     @And("now is {string}")
-    public void nowIs(final String time) {
-        //TODO: Implement once clock is setup
+    public void nowIs(final String dateTime) {
+        when(this.clock.getClock()).thenReturn(
+                Clock.fixed(Instant.parse(dateTime), ZoneId.systemDefault()));
     }
 
     @When("a POST request is sent to {string} with data")
@@ -101,7 +109,6 @@ public class ApiStepDefs extends CucumberSpringConfiguration {
         assertEquals(expectedStatus, response.getStatus());
         JSONAssert.assertEquals(expectedBody, response.getContentAsString(), new CustomComparator(
                 JSONCompareMode.LENIENT,
-                new Customization("timestamp", (o1, o2) -> true),
                 new Customization("result.orderId", (o1, o2) -> true)
         ));
     }
@@ -113,10 +120,8 @@ public class ApiStepDefs extends CucumberSpringConfiguration {
         response = mvcResult.getResponse();
         log.info(response.getContentAsString());
         assertEquals(expectedStatus, response.getStatus());
-        JSONAssert.assertEquals(expectedBody, response.getContentAsString(), new CustomComparator(
-                JSONCompareMode.LENIENT,
-                new Customization("timestamp", (o1, o2) -> true)
-        ));
+        JSONAssert.assertEquals(expectedBody, response.getContentAsString(),
+                JSONCompareMode.STRICT);
     }
 
     @And("contains headers")
@@ -174,10 +179,11 @@ public class ApiStepDefs extends CucumberSpringConfiguration {
 
     private void assertOrderJsonEqualToOrderInDatabase(final JSONObject expectedOrderJson)
             throws JsonProcessingException {
-        final int id = (int) retrieveJsonItem(expectedOrderJson, "id");
-        final Order orderActual = this.orderRepository.findById(id)
+        final UUID orderId = UUID.fromString(
+                ((String) retrieveJsonItem(expectedOrderJson, "orderId")));
+        final Order orderActual = this.orderRepository.findByOrderId(orderId)
                 .orElseThrow(() -> new AssertionError(
-                        "Expected order with id \"" + id + "\" but none was found"));
+                        "Expected order with id \"" + orderId + "\" but none was found"));
 
         // annoyingly, if expectedOrderJson has auditItems = [] but orderActual has non-zero length auditItems, JSONAssert.assertEquals will throw a divide-by-zero error instead of showing the diff
         assertEquals(expectedOrderJson.getJSONArray("auditItems").length(),
@@ -186,8 +192,7 @@ public class ApiStepDefs extends CucumberSpringConfiguration {
         JSONAssert.assertEquals(expectedOrderJson.toString(),
                 objectMapper.writeValueAsString(orderActual), new CustomComparator(
                         JSONCompareMode.LENIENT,
-                        new Customization("timestamp", (o1, o2) -> true),
-                        new Customization("lastUpdated", (o1, o2) -> true),
+                        new Customization("id", (o1, o2) -> true),
                         new Customization("auditItems", new ArrayValueMatcher<>(
                                 new DefaultComparator(JSONCompareMode.LENIENT)))
                 ));
