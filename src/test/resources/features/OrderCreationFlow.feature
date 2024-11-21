@@ -1,4 +1,4 @@
-Feature: Example feature file
+Feature: Order service flow
 
   Background:
     Given initial setup is complete
