@@ -1,3 +1,5 @@
+environment:
+  name: LOCAL
 spring:
   application:
     name: Order-Service
@@ -27,7 +29,27 @@ spring:
   threads:
     virtual:
       enabled: true
-
+  boot:
+    admin:
+      client:
+        url: http://localhost:6113/spring-boot-admin
+        enabled: true
+        auto-registration: true
+        instance:
+          name: "${spring.application.name} - ${environment.name}"
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+  health:
+    livenessState:
+      enabled: true
+    readinessState:
+      enabled: true
 server:
   port: 8083
   servlet:
@@ -39,3 +61,8 @@ gsshop-common:
     enabled: true
     jwt-token-secret: c63714bee7677d179d980aeceffb1a2ac63ebb25933cc16ad58d90f043b9da9f1c22b6d70e7ec8183884108eb6660be5d1cfba7da55b56cfa6e8ba201f97370a
     jwt-token-salt: abcd1234
+
+# Logs to file and allows SBA to pick it up as well
+logging:
+  file:
+    name: logs/order-service.log
