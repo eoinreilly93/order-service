@@ -1,0 +1,16 @@
+environment:
+  name: LOCAL
+spring:
+  boot:
+    admin:
+      client:
+        url: http://localhost:6113/spring-boot-admin
+        enabled: true
+        auto-registration: true
+        instance:
+          name: "${spring.application.name} - ${environment.name}"
+          health-url: http://host.docker.internal:${server.port}${server.servlet.context-path}/actuator/health
+          management-url: http://host.docker.internal:${server.port}${server.servlet.context-path}/actuator
+          service-url: http://host.docker.internal:${server.port}${server.servlet.context-path}
+        username: admin
+        password: admin

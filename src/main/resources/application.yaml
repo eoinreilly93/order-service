@@ -29,14 +29,7 @@ spring:
   threads:
     virtual:
       enabled: true
-  boot:
-    admin:
-      client:
-        url: http://localhost:6113/spring-boot-admin
-        enabled: true
-        auto-registration: true
-        instance:
-          name: "${spring.application.name} - ${environment.name}"
+
 management:
   endpoints:
     web:
@@ -45,6 +38,12 @@ management:
   endpoint:
     health:
       show-details: always
+      group:
+        liveness:
+          include:
+            - livenessState
+            - db
+            - ping
   health:
     livenessState:
       enabled: true
